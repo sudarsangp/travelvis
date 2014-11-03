@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<meta charset="utf-8">
+	<meta name="keywords" content="HTML, CSS, JavaScript, jQuery, d3.js">
+	<meta name="description" content="Travel optimizer">
+	<meta name="author" content="Sudarsan GP">
+	<title>PE FrontEnd OnTime</title>
+	<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.0/css/bootstrap.min.css" />
+	<link rel="stylesheet" href="stylesheet/homeStyle.css" />
+</head>
+<body>
+
+	<div class="container">
+		<h2> Optimize Travel </h2>
+		<div class="row">
+			<div class="col-xs-3">
+				Choose Departure Airport
+			</div>
+			<div class="col-xs-3">
+				<select id="depAir">
+
+				</select>
+			</div>
+		</div>
+		<div class="row">
+			<div class="col-xs-3">
+				Choose Airline to Fly
+			</div>
+			<div class="col-xs-3">
+				<select id="airFly">
+
+				</select>
+			</div>
+		</div>
+		<div class="row">
+			<div class="col-xs-3">
+				Choose Destination Airport
+			</div>
+			<div class="col-xs-3">
+				<select id="destAir">
+
+				</select>
+			</div>
+		</div>
+		<div class="row">
+			<section id="forceGraph">
+
+			</section>
+		</div>
+	</div>
+
+	<script src="https://ajax.googleapis.com/ajax/libs/jquery/2.1.1/jquery.min.js"></script>
+	<script src="scripts/jquery.csv-0.71.min.js"></script>
+	<script src="http://d3js.org/d3.v3.min.js"></script>
+	<script src="scripts/home.js"></script>
+</body>
+</html>
