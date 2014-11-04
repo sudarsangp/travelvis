@@ -1,7 +1,9 @@
 $(document).ready(function() {
 	// console.log("hello");
+	var airportCsv = [];
 	$.get('/data/L_AIRPORT.csv-', function(data){
 		var fromCsv = $.csv.toObjects(data);
+		airportCsv = fromCsv;
 		var selectElement = $("#depAir");
 
 		for(var i=0; i<fromCsv.length;i++) {
@@ -15,23 +17,6 @@ $(document).ready(function() {
 	})
 		.done(function(data) {
 			// alert('done ');
-			// var fromCsv = $.csv.toObjects(data);
-			// var flightNode = {};
-			// var nodesArray = [];
-			// for(var i=0; i<fromCsv.length; i++) {
-			// 	flightNode["description"] = fromCsv[i].Description;
-			// 	flightNode["code"] = fromCsv[i].Code;
-			// 	nodesArray.push(flightNode);
-			// 	flightNode = {};
-			// }
-			// // console.log(nodesArray[0]);
-			// // console.log(nodesArray[1]);
-			// var result = {};
-			// result["nodes"] = nodesArray;
-			// var validJson = JSON.stringify(result);
-			// //forceDirectedGraph(validJson);
-
-
 		})
 		.fail(function() {
 			alert(' error departure airport');
@@ -86,61 +71,120 @@ $(document).ready(function() {
 			// alert('cool');
 		});
 
-	var allOriginDest = [];
 	var formatData = [];
-	$.get('/data/small.json', function(data) {
+
+	function iterateTestData(deptCode, arrCode) {
+		$.get('/data/ontime_data_test.json', function(data) {
 	//	console.log(data.length);
 	//	console.log(typeof data);
 		
-		var dataJson = JSON.parse(data);
-		// console.log(dataJson[0].origin);
-		// console.log(dataJson[0].dest);
-		var entry = [];
-		var eachObject = {}
-		for(var i=0; i<dataJson.length; i++) {
-			entry.push(dataJson[i].origin);
-			entry.push(dataJson[i].dest);
-			//entry.push(dataJson[i].fl_date);
-			allOriginDest.push(entry);
-			entry = [];
-
-			eachObject["source"] = dataJson[i].origin;
-			eachObject["target"] = dataJson[i].dest;
-			formatData.push(eachObject);
-			eachObject = {};
-		}
+			var dataJson = JSON.parse(data);
+			// console.log(dataJson[0].origin);
+			// console.log(dataJson[0].dest);
+			//console.log(deptCode);
+			var eachObject = {}
+			for(var i=0; i<dataJson.length; i++) {
+				if(dataJson[i].origin === deptCode && dataJson[i].dest === arrCode) {
+				//	console.log("match exists");
+					eachObject["source"] = dataJson[i].origin;
+					eachObject["target"] = dataJson[i].dest;
+					formatData.push(eachObject);
+					eachObject = {};
+				}
+				// else if(dataJson[i].origin === deptCode) {
+				// 	eachObject["source"] = dataJson[i].origin;
+				// 	eachObject["target"] = dataJson[i].dest;
+				// 	formatData.push(eachObject);
+				// 	eachObject = {};
+				// }
+				// else if(dataJson[i].dest === arrCode) {
+				// 	eachObject["source"] = dataJson[i].origin;
+				// 	eachObject["target"] = dataJson[i].dest;
+				// 	formatData.push(eachObject);
+				// 	eachObject = {};
+				// }
+			}
+		})
+		.done(function() {
+			renderGraph();
+		});
+	};
+	
+	//iterateTestData();
+	
+	
+	$("#depAir").change(function() {
+		var selectedOption = "";
+		var departureCode = "";
 		
-		//console.log(allOriginDest);
-		var csvContent = "data:text/csv;charset=utf-8,";
-		// donot give space between source,target,value
-		csvContent += "source,target,value" + "\n";
-		allOriginDest.forEach(function(infoArray, index){
+		selectedOption = $(this).val();
 
-   			dataString = infoArray.join(",");
-   			csvContent += index < allOriginDest.length ? dataString+ "\n" : dataString;
+			var fromCsv = airportCsv;
+		//	console.log(fromCsv.length);
+			for(var i=0; i<fromCsv.length;i++) {
+				var codeValue = fromCsv[i].Code;
+				var descriptionValue = fromCsv[i].Description;
+				
+				if(selectedOption === codeValue) {
+					//console.log(descriptionValue);
+					
+					departureCode = codeValue;
+					// console.log(codeValue);
+					break;
+				}
+			};
+	
+			//console.log(departureCode);
+			var arrivalCode = $("#destAir").val();
+			iterateTestData(departureCode, arrivalCode);
+	   // console.log(selectedOption);
+	   // console.log(selectedOption.length);
 
-		}); 
 
-		var encodedUri = encodeURI(csvContent);
-		var link = document.createElement("a");
-		link.setAttribute("href", encodedUri);
-		link.setAttribute("download", "test_small.csv");
+	});
 
-		//link.click(); // This will download the data file
+	$("#destAir").change(function() {
+		var selectedOption = "";
+		var arrivalCode = "";
+		
+		selectedOption = $(this).val();
 
-	})
-	.done(function() {
-		//d3.csv("data/test_small.csv", function(error, links) {
+			var fromCsv = airportCsv;
+			console.log(fromCsv.length);
+			for(var i=0; i<fromCsv.length;i++) {
+				var codeValue = fromCsv[i].Code;
+				var descriptionValue = fromCsv[i].Description;
+				
+				if(selectedOption === codeValue) {
+					//console.log(descriptionValue);
+					
+					arrivalCode = codeValue;
+					// console.log(codeValue);
+					break;
+				}
+			};
+			var departureCode = $("#depAir").val();
+			iterateTestData(departureCode, arrivalCode);
+	   // console.log(selectedOption);
+	   // console.log(selectedOption.length);
+
+
+	});
+	function renderGraph() {
+
+			//d3.csv("data/test_small.csv", function(error, links) {
 			
 			// // var links = [{source: "Microsoft", target: "Amazon", type: "licensing"},
    //           {source: "Microsoft", target: "Amazon", type: "suit"},
    //           {source: "Samsung", target: "Apple", type: "suit"},
    //           {source: "Microsoft", target: "Amazon", type: "resolved"}];
+   		//	console.log(window);
+   			$("svg").remove();
    			var links = formatData;
-
-   			console.log(links[0]);
-			console.log(links[1]);
-			console.log(links);
+   		//	console.log(links.length);
+   		//	console.log(links[0]);
+		//	console.log(links[1]);
+			//console.log(links);
 
 			var color = d3.scale.category20();
 			var numberOfLinks = [1,2,3,4,5,6,7,8,9];
@@ -211,6 +255,7 @@ $(document).ready(function() {
 			    .data(force.nodes())
 			  .enter().append("svg:circle")
 			    .attr("r", 6)
+			    .style("fill", function(d){ return color(d.linknum);})
 			    .call(force.drag);
 
 			var text = svg.append("svg:g").selectAll("g")
@@ -247,71 +292,8 @@ $(document).ready(function() {
 			  });
 			};
 		//});
-	});
-			
-	
-
-
-
-
-
-// function forceDirectedGraph(dataIn) {
-// 	// console.log("in fucntion call");
-// 	// console.log(typeof dataIn);
-// 	var dataJson = JSON.parse(dataIn);
-// 	// console.log(typeof dataJson);
-// 	// console.log(dataJson["nodes"].length);
-// 	// console.log(dataJson["nodes"][0]);
-// 	var width = 960,
-// 		height = 500;
-
-// 	var color = d3.scale.category20();
-
-// 	var force = d3.layout.force()
-//     	.charge(-120)
-//     	.linkDistance(30)
-//     	.size([width, height])
-//     	.gravity(0.3);
-
-// 	var svg = d3.select("#forceGraph").append("svg")
-//     	.attr("width", width)
-//     	.attr("height", height);
-
-//     d3.json("scripts/miserables.json", function(error, graph) {
-//     //	console.log("in d3.js");
-//     	force
-//       .nodes(graph.nodes)
-//       //.links(graph.links)
-//       .start();
-
-//   var link = svg.selectAll(".link")
-//       .data(graph.links)
-//     .enter().append("line")
-//       .attr("class", "link")
-//       .style("stroke-width", function(d) { return Math.sqrt(d.value); });
-
-//   var node = svg.selectAll(".node")
-//       .data(graph.nodes)
-//     .enter().append("circle")
-//       .attr("class", "node")
-//       .attr("r", 5)
-//       .style("fill", function(d) { return color(d.group); })
-//       .call(force.drag);
-
-//   node.append("title")
-//       .text(function(d) { return d.description; });
-
-//   force.on("tick", function() {
-//     link.attr("x1", function(d) { return d.source.x; })
-//         .attr("y1", function(d) { return d.source.y; })
-//         .attr("x2", function(d) { return d.target.x; })
-//         .attr("y2", function(d) { return d.target.y; });
-
-//     node.attr("cx", function(d) { return d.x; })
-//         .attr("cy", function(d) { return d.y; });
-//   });
-//     });
-
-// };
+		//console.log(formatData.length);
+		formatData.length = 0;
+	};
 
 });
