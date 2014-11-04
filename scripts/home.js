@@ -29,16 +29,16 @@ $(document).ready(function() {
 	$.get('/data/L_UNIQUE_CARRIERS.csv-', function(data){
 		var fromCsv = $.csv.toObjects(data);
 		carrierCsv = fromCsv;
-		var selectElement = $("#airFly");
+		// var selectElement = $("#airFly");
 
-		for(var i=0; i<fromCsv.length;i++) {
-			var codeValue = fromCsv[i].Code;
-			var descriptionValue = fromCsv[i].Description;
-			selectElement.append(new Option(descriptionValue, codeValue));
-		};
-		selectElement.html($("#airFly option").sort(function(a, b) {
-			return a.text == b.text ? 0 : a.text < b.text ? -1 : 1
-		}));
+		// for(var i=0; i<fromCsv.length;i++) {
+		// 	var codeValue = fromCsv[i].Code;
+		// 	var descriptionValue = fromCsv[i].Description;
+		// 	selectElement.append(new Option(descriptionValue, codeValue));
+		// };
+		// selectElement.html($("#airFly option").sort(function(a, b) {
+		// 	return a.text == b.text ? 0 : a.text < b.text ? -1 : 1
+		// }));
 	})
 		.done(function() {
 			// alert('done ');
@@ -50,28 +50,28 @@ $(document).ready(function() {
 			// alert('cool');
 		});
 
-	$.get('/data/L_AIRPORT.csv-', function(data){
-		var fromCsv = $.csv.toObjects(data);
-		var selectElement = $("#destAir");
+	// $.get('/data/L_AIRPORT.csv-', function(data){
+	// 	var fromCsv = $.csv.toObjects(data);
+	// 	// var selectElement = $("#destAir");
 
-		for(var i=0; i<fromCsv.length;i++) {
-			var codeValue = fromCsv[i].Code;
-			var descriptionValue = fromCsv[i].Description;
-			selectElement.append(new Option(descriptionValue, codeValue));
-		};
-		selectElement.html($("#destAir option").sort(function(a, b) {
-			return a.text == b.text ? 0 : a.text < b.text ? -1 : 1
-		}));
-	})
-		.done(function() {
-			// alert('done ');
-		})
-		.fail(function() {
-			alert(' error destination airport');
-		})
-		.always(function() {
-			// alert('cool');
-		});
+	// 	// for(var i=0; i<fromCsv.length;i++) {
+	// 	// 	var codeValue = fromCsv[i].Code;
+	// 	// 	var descriptionValue = fromCsv[i].Description;
+	// 	// 	selectElement.append(new Option(descriptionValue, codeValue));
+	// 	// };
+	// 	// selectElement.html($("#destAir option").sort(function(a, b) {
+	// 	// 	return a.text == b.text ? 0 : a.text < b.text ? -1 : 1
+	// 	// }));
+	// })
+	// 	.done(function() {
+	// 		// alert('done ');
+	// 	})
+	// 	.fail(function() {
+	// 		alert(' error destination airport');
+	// 	})
+	// 	.always(function() {
+	// 		// alert('cool');
+	// 	});
 
 	var formatData = [];
 
@@ -84,6 +84,49 @@ $(document).ready(function() {
 			// console.log(dataJson[0].origin);
 			// console.log(dataJson[0].dest);
 			//console.log(deptCode);
+			var deptCarrierCodes = [];
+			var destAirportCodes = [];
+			for(var i=0; i<dataJson.length; i++) {
+				if(dataJson[i].origin === deptCode) {
+					deptCarrierCodes.push(dataJson[i].unique_carrier);
+					destAirportCodes.push(dataJson[i].dest);
+				}
+			}
+			// console.log(deptCarrierCodes);
+			// console.log(destAirportCodes);
+			var selectElementCarrier = $("#airFly");
+			var fromCsv = carrierCsv;
+			for(var i=0; i<fromCsv.length;i++) {
+				var codeValue = fromCsv[i].Code;
+				var descriptionValue = fromCsv[i].Description;
+				for(var j=0; j<deptCarrierCodes.length;j++){
+					if(deptCarrierCodes[j] === codeValue) {
+						selectElementCarrier.append(new Option(descriptionValue, codeValue));
+						break;
+					}
+				}
+				
+			};
+			selectElementCarrier.html($("#airFly option").sort(function(a, b) {
+				return a.text == b.text ? 0 : a.text < b.text ? -1 : 1
+			}));
+
+			var selectElementDestination = $("#destAir");
+			var fromCsvDest = airportCsv;
+			for(var i=0; i<fromCsvDest.length;i++) {
+				var codeValue = fromCsvDest[i].Code;
+				var descriptionValue = fromCsvDest[i].Description;
+				for(var j=0; j<destAirportCodes.length;j++){
+					if(destAirportCodes[j] === codeValue) {
+						selectElementDestination.append(new Option(descriptionValue, codeValue));
+						break;
+					}
+				}
+			};
+			selectElementDestination.html($("#destAir option").sort(function(a, b) {
+				return a.text == b.text ? 0 : a.text < b.text ? -1 : 1
+			}));
+
 			var min =  Number.MAX_SAFE_INTEGER;
 
 			for(var i=0; i<dataJson.length; i++) {
@@ -128,7 +171,7 @@ $(document).ready(function() {
 	};
 	
 	// for testing purposes remove them finally
-	iterateTestData("JFK", "LAX", "AA");
+	//iterateTestData("JFK", "LAX", "AA");
 	
 	
 	$("#depAir").change(function() {
@@ -162,61 +205,61 @@ $(document).ready(function() {
 
 	});
 
-	$("#destAir").change(function() {
-		var selectedOption = "";
-		var arrivalCode = "";
+	// $("#destAir").change(function() {
+	// 	var selectedOption = "";
+	// 	var arrivalCode = "";
 		
-		selectedOption = $(this).val();
+	// 	selectedOption = $(this).val();
 
-			var fromCsv = airportCsv;
-			//console.log(fromCsv.length);
-			for(var i=0; i<fromCsv.length;i++) {
-				var codeValue = fromCsv[i].Code;
-				var descriptionValue = fromCsv[i].Description;
+	// 		var fromCsv = airportCsv;
+	// 		//console.log(fromCsv.length);
+	// 		for(var i=0; i<fromCsv.length;i++) {
+	// 			var codeValue = fromCsv[i].Code;
+	// 			var descriptionValue = fromCsv[i].Description;
 				
-				if(selectedOption === codeValue) {
-					//console.log(descriptionValue);
+	// 			if(selectedOption === codeValue) {
+	// 				//console.log(descriptionValue);
 					
-					arrivalCode = codeValue;
-					// console.log(codeValue);
-					break;
-				}
-			};
-			var departureCode = $("#depAir").val();
-			var carrierCode = $("#airFly").val();
-			iterateTestData(departureCode, arrivalCode, carrierCode);
-	   // console.log(selectedOption);
-	   // console.log(selectedOption.length);
+	// 				arrivalCode = codeValue;
+	// 				// console.log(codeValue);
+	// 				break;
+	// 			}
+	// 		};
+	// 		var departureCode = $("#depAir").val();
+	// 		var carrierCode = $("#airFly").val();
+	// 		iterateTestData(departureCode, arrivalCode, carrierCode);
+	//    // console.log(selectedOption);
+	//    // console.log(selectedOption.length);
 
 
-	});
+	// });
 
 
-	$("#airFly").change(function() {
-		var selectedOption = "";
-		var carrierCode = "";
-		selectedOption = $(this).val();
+	// $("#airFly").change(function() {
+	// 	var selectedOption = "";
+	// 	var carrierCode = "";
+	// 	selectedOption = $(this).val();
 
-		var fromCsv = carrierCsv;
-			//console.log(fromCsv.length);
-			for(var i=0; i<fromCsv.length;i++) {
-				var codeValue = fromCsv[i].Code;
-				var descriptionValue = fromCsv[i].Description;
+	// 	var fromCsv = carrierCsv;
+	// 		//console.log(fromCsv.length);
+	// 		for(var i=0; i<fromCsv.length;i++) {
+	// 			var codeValue = fromCsv[i].Code;
+	// 			var descriptionValue = fromCsv[i].Description;
 				
-				if(selectedOption === codeValue) {
-					//console.log(descriptionValue);
+	// 			if(selectedOption === codeValue) {
+	// 				//console.log(descriptionValue);
 					
-					carrierCode = codeValue;
-					// console.log(codeValue);
-					break;
-				}
-			};
-			var departureCode = $("#depAir").val();
-			var arrivalCode = $("#destAir").val();
-			iterateTestData(departureCode, arrivalCode, carrierCode);
+	// 				carrierCode = codeValue;
+	// 				// console.log(codeValue);
+	// 				break;
+	// 			}
+	// 		};
+	// 		var departureCode = $("#depAir").val();
+	// 		var arrivalCode = $("#destAir").val();
+	// 		iterateTestData(departureCode, arrivalCode, carrierCode);
 
 
-	});
+	// });
 
 	function renderGraph() {
 
