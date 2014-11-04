@@ -9,8 +9,10 @@ $(document).ready(function() {
 			var descriptionValue = fromCsv[i].Description;
 			selectElement.append(new Option(descriptionValue, codeValue));
 		};
-		
-		})
+		selectElement.html($("#depAir option").sort(function(a, b) {
+			return a.text == b.text ? 0 : a.text < b.text ? -1 : 1
+		}));
+	})
 		.done(function(data) {
 			// alert('done ');
 			// var fromCsv = $.csv.toObjects(data);
@@ -47,8 +49,10 @@ $(document).ready(function() {
 			var descriptionValue = fromCsv[i].Description;
 			selectElement.append(new Option(descriptionValue, codeValue));
 		};
-		
-		})
+		selectElement.html($("#airFly option").sort(function(a, b) {
+			return a.text == b.text ? 0 : a.text < b.text ? -1 : 1
+		}));
+	})
 		.done(function() {
 			// alert('done ');
 		})
@@ -68,8 +72,10 @@ $(document).ready(function() {
 			var descriptionValue = fromCsv[i].Description;
 			selectElement.append(new Option(descriptionValue, codeValue));
 		};
-		
-		})
+		selectElement.html($("#destAir option").sort(function(a, b) {
+			return a.text == b.text ? 0 : a.text < b.text ? -1 : 1
+		}));
+	})
 		.done(function() {
 			// alert('done ');
 		})
@@ -80,8 +86,9 @@ $(document).ready(function() {
 			// alert('cool');
 		});
 
-
-	$.get('/data/ontime_data_test.json', function(data) {
+	var allOriginDest = [];
+	var formatData = [];
+	$.get('/data/small.json', function(data) {
 	//	console.log(data.length);
 	//	console.log(typeof data);
 		
@@ -89,13 +96,18 @@ $(document).ready(function() {
 		// console.log(dataJson[0].origin);
 		// console.log(dataJson[0].dest);
 		var entry = [];
-		var allOriginDest = [];
+		var eachObject = {}
 		for(var i=0; i<dataJson.length; i++) {
 			entry.push(dataJson[i].origin);
 			entry.push(dataJson[i].dest);
 			//entry.push(dataJson[i].fl_date);
 			allOriginDest.push(entry);
 			entry = [];
+
+			eachObject["source"] = dataJson[i].origin;
+			eachObject["target"] = dataJson[i].dest;
+			formatData.push(eachObject);
+			eachObject = {};
 		}
 		
 		//console.log(allOriginDest);
@@ -112,20 +124,24 @@ $(document).ready(function() {
 		var encodedUri = encodeURI(csvContent);
 		var link = document.createElement("a");
 		link.setAttribute("href", encodedUri);
-		link.setAttribute("download", "original_test.csv");
+		link.setAttribute("download", "test_small.csv");
 
-		link.click(); // This will download the data file named "my_data.csv".
+		//link.click(); // This will download the data file
 
 	})
 	.done(function() {
-		d3.csv("data/original_test.csv", function(error, links) {
-			console.log(links[0]);
-			console.log(links[1]);
-			console.log(links);
-			// var links = [{source: "Microsoft", target: "Amazon", type: "licensing"},
+		//d3.csv("data/test_small.csv", function(error, links) {
+			
+			// // var links = [{source: "Microsoft", target: "Amazon", type: "licensing"},
    //           {source: "Microsoft", target: "Amazon", type: "suit"},
    //           {source: "Samsung", target: "Apple", type: "suit"},
    //           {source: "Microsoft", target: "Amazon", type: "resolved"}];
+   			var links = formatData;
+
+   			console.log(links[0]);
+			console.log(links[1]);
+			console.log(links);
+
 			var color = d3.scale.category20();
 			var numberOfLinks = [1,2,3,4,5,6,7,8,9];
 			links.sort(function(a,b) {
@@ -230,7 +246,7 @@ $(document).ready(function() {
 			    return "translate(" + d.x + "," + d.y + ")";
 			  });
 			};
-		});
+		//});
 	});
 			
 	
