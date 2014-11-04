@@ -1,6 +1,7 @@
 $(document).ready(function() {
 	// console.log("hello");
 	var airportCsv = [];
+	var carrierCsv = [];
 	$.get('/data/L_AIRPORT.csv-', function(data){
 		var fromCsv = $.csv.toObjects(data);
 		airportCsv = fromCsv;
@@ -27,6 +28,7 @@ $(document).ready(function() {
 		
 	$.get('/data/L_UNIQUE_CARRIERS.csv-', function(data){
 		var fromCsv = $.csv.toObjects(data);
+		carrierCsv = fromCsv;
 		var selectElement = $("#airFly");
 
 		for(var i=0; i<fromCsv.length;i++) {
@@ -73,7 +75,7 @@ $(document).ready(function() {
 
 	var formatData = [];
 
-	function iterateTestData(deptCode, arrCode) {
+	function iterateTestData(deptCode, arrCode, carrierCode) {
 		$.get('/data/ontime_data_test.json', function(data) {
 	//	console.log(data.length);
 	//	console.log(typeof data);
@@ -82,14 +84,29 @@ $(document).ready(function() {
 			// console.log(dataJson[0].origin);
 			// console.log(dataJson[0].dest);
 			//console.log(deptCode);
+			var min =  Number.MAX_SAFE_INTEGER;
+
+			for(var i=0; i<dataJson.length; i++) {
+				if(dataJson[i].origin === deptCode && dataJson[i].dest === arrCode && dataJson[i].unique_carrier === carrierCode) {
+					var totaldelay = (dataJson[i].dep_delay) + (dataJson[i].arr_delay);
+					if(min > totaldelay){
+						min = totaldelay;
+					}
+				}
+			}
+
 			var eachObject = {}
 			for(var i=0; i<dataJson.length; i++) {
-				if(dataJson[i].origin === deptCode && dataJson[i].dest === arrCode) {
+				if(dataJson[i].origin === deptCode && dataJson[i].dest === arrCode && dataJson[i].unique_carrier === carrierCode) {
 				//	console.log("match exists");
-					eachObject["source"] = dataJson[i].origin;
-					eachObject["target"] = dataJson[i].dest;
-					formatData.push(eachObject);
-					eachObject = {};
+					if(min === (dataJson[i].dep_delay) + (dataJson[i].arr_delay)) {
+						eachObject["source"] = dataJson[i].origin;
+						eachObject["target"] = dataJson[i].dest;
+						eachObject["carrier"] = dataJson[i].unique_carrier;
+						eachObject["totaldelay"] = (dataJson[i].dep_delay) + (dataJson[i].arr_delay);
+						formatData.push(eachObject);
+						eachObject = {};
+					}
 				}
 				// else if(dataJson[i].origin === deptCode) {
 				// 	eachObject["source"] = dataJson[i].origin;
@@ -110,7 +127,8 @@ $(document).ready(function() {
 		});
 	};
 	
-	//iterateTestData();
+	// for testing purposes remove them finally
+	iterateTestData("JFK", "LAX", "AA");
 	
 	
 	$("#depAir").change(function() {
@@ -136,7 +154,8 @@ $(document).ready(function() {
 	
 			//console.log(departureCode);
 			var arrivalCode = $("#destAir").val();
-			iterateTestData(departureCode, arrivalCode);
+			var carrierCode = $("#airFly").val();
+			iterateTestData(departureCode, arrivalCode, carrierCode);
 	   // console.log(selectedOption);
 	   // console.log(selectedOption.length);
 
@@ -150,7 +169,7 @@ $(document).ready(function() {
 		selectedOption = $(this).val();
 
 			var fromCsv = airportCsv;
-			console.log(fromCsv.length);
+			//console.log(fromCsv.length);
 			for(var i=0; i<fromCsv.length;i++) {
 				var codeValue = fromCsv[i].Code;
 				var descriptionValue = fromCsv[i].Description;
@@ -164,12 +183,41 @@ $(document).ready(function() {
 				}
 			};
 			var departureCode = $("#depAir").val();
-			iterateTestData(departureCode, arrivalCode);
+			var carrierCode = $("#airFly").val();
+			iterateTestData(departureCode, arrivalCode, carrierCode);
 	   // console.log(selectedOption);
 	   // console.log(selectedOption.length);
 
 
 	});
+
+
+	$("#airFly").change(function() {
+		var selectedOption = "";
+		var carrierCode = "";
+		selectedOption = $(this).val();
+
+		var fromCsv = carrierCsv;
+			//console.log(fromCsv.length);
+			for(var i=0; i<fromCsv.length;i++) {
+				var codeValue = fromCsv[i].Code;
+				var descriptionValue = fromCsv[i].Description;
+				
+				if(selectedOption === codeValue) {
+					//console.log(descriptionValue);
+					
+					carrierCode = codeValue;
+					// console.log(codeValue);
+					break;
+				}
+			};
+			var departureCode = $("#depAir").val();
+			var arrivalCode = $("#destAir").val();
+			iterateTestData(departureCode, arrivalCode, carrierCode);
+
+
+	});
+
 	function renderGraph() {
 
 			//d3.csv("data/test_small.csv", function(error, links) {
@@ -187,7 +235,11 @@ $(document).ready(function() {
 			//console.log(links);
 
 			var color = d3.scale.category20();
-			var numberOfLinks = [1,2,3,4,5,6,7,8,9];
+			var numberOfLinks = [];
+			for(var x=1; x<100;x++){
+				numberOfLinks.push(x);
+			}
+			
 			links.sort(function(a,b) {
 			    if (a.source > b.source) {return 1;}
 			    else if (a.source < b.source) {return -1;}
@@ -222,12 +274,12 @@ $(document).ready(function() {
 			    .nodes(d3.values(nodes))
 			    .links(links)
 			    .size([w, h])
-			    .linkDistance(100)
-			    .charge(-30)
+			    .linkDistance(200)
+			    .charge(-150)
 			    .on("tick", tick)
 			    .start();
 
-			var svg = d3.select("body").append("svg:svg")
+			var svg = d3.select("#forceGraph").append("svg:svg")
 			    .attr("width", w)
 			    .attr("height", h);
 
@@ -249,12 +301,30 @@ $(document).ready(function() {
 			    .data(force.links())
 			  .enter().append("svg:path")
 			    .attr("class", function(d) { return "link " + d.linknum; })
+			    .attr("id",function(d,i) { return "linkId_" + i; })
 			    .attr("marker-end", function(d) { return "url(#" + d.linknum + ")"; });
+
+			     var linktext = svg.append("svg:g").selectAll("g.linklabelholder").data(force.links());
+    	
+			    linktext.enter().append("g").attr("class", "linklabelholder")
+			     .append("text")
+			     .attr("class", "linklabel")
+			    	 .style("font-size", "13px")
+			     .attr("x", "20")
+			    	 .attr("y", "-20")
+			     .attr("text-anchor", "start")
+			    	   .style("fill","#000")
+			    	 .append("textPath")
+			    .attr("xlink:href",function(d,i) { return "#linkId_" + i;})
+			     .text(function(d) { 
+			    	 return d.carrier; 
+			    	 });
+		 
 
 			var circle = svg.append("svg:g").selectAll("circle")
 			    .data(force.nodes())
 			  .enter().append("svg:circle")
-			    .attr("r", 6)
+			    .attr("r", 5)
 			    .style("fill", function(d){ return color(d.linknum);})
 			    .call(force.drag);
 
@@ -279,7 +349,7 @@ $(document).ready(function() {
 			  path.attr("d", function(d) {
 			    var dx = d.target.x - d.source.x,
 			        dy = d.target.y - d.source.y,
-			        dr = 250/d.linknum;  //linknum is defined above
+			        dr = 150/d.linknum;  //linknum is defined above
 			    return "M" + d.source.x + "," + d.source.y + "A" + dr + "," + dr + " 0 0,1 " + d.target.x + "," + d.target.y;
 			  });
 
