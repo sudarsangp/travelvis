@@ -79,6 +79,10 @@ $(document).ready(function() {
 						eachObject["target"] = dataJson[i].dest;
 						eachObject["carrier"] = dataJson[i].unique_carrier;
 						eachObject["totaldelay"] = parseInt(dataJson[i].dep_delay, 10) + parseInt(dataJson[i].arr_delay, 10);
+						eachObject["cancelled"] = dataJson[i].cancelled;
+						eachObject["flightdate"] = dataJson[i].fl_date;
+						eachObject["dayofweek"] = dataJson[i].day_of_week;
+						eachObject["distance"] = dataJson[i].distance;
 
 						formatData.push(eachObject);
 						eachObject = {};
@@ -228,6 +232,17 @@ $(document).ready(function() {
 
 	function renderGraph() {
 		$("svg").remove();
+		if(formatData.length > 0) {
+			$("#departureData").html(formatData[0].source);
+			$("#arrivalData").html(formatData[0].target);
+			$("#carrierData").html(formatData[0].carrier);
+			$("#totalDelayData").html(formatData[0].totaldelay);
+			$("#cancelData").html(formatData[0].cancelled);
+			$("#flightDateData").html(formatData[0].flightdate);
+			$("#dayOfWeekData").html(formatData[0].dayofweek);
+			$("#distanceData").html(formatData[0].distance);
+		}
+		
 		var links = formatData;
 
 		var color = d3.scale.category20();
