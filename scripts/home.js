@@ -1,5 +1,9 @@
 $(document).ready(function() {
 	// console.log("hello");
+	$("#hideCarrier").hide();
+	$("#hideDestAir").hide();
+	$(".hideFligtDetails").hide();
+
 	var airportCsv = [];
 	var carrierCsv = [];
 	$.get('/data/L_AIRPORT.csv-', function(data){
@@ -122,6 +126,7 @@ $(document).ready(function() {
 	};
 	
 	function populateDestinationAirport(destAirportCodes) {
+		$("#hideDestAir").show();
 		var selectElementDestination = $("#destAir");
 		selectElementDestination.find("option").remove();
 			var fromCsvDest = airportCsv;
@@ -141,6 +146,7 @@ $(document).ready(function() {
 	};
 
 	function populateCarriers(deptCarrierCodes) {
+		$("#hideCarrier").show();
 		var selectElementCarrier = $("#airFly");
 		selectElementCarrier.find("option").remove();
 		var fromCsv = carrierCsv;
@@ -233,14 +239,18 @@ $(document).ready(function() {
 	function renderGraph() {
 		$("svg").remove();
 		if(formatData.length > 0) {
-			$("#departureData").html(formatData[0].source);
-			$("#arrivalData").html(formatData[0].target);
-			$("#carrierData").html(formatData[0].carrier);
-			$("#totalDelayData").html(formatData[0].totaldelay);
-			$("#cancelData").html(formatData[0].cancelled);
-			$("#flightDateData").html(formatData[0].flightdate);
-			$("#dayOfWeekData").html(formatData[0].dayofweek);
-			$("#distanceData").html(formatData[0].distance);
+			$(".hideFligtDetails").show();
+			for(var i=0; i<formatData.length; i++) {
+				$("#departureData").html(formatData[i].source);
+				$("#arrivalData").html(formatData[i].target);
+				$("#carrierData").html(formatData[i].carrier);
+				$("#totalDelayData").html(formatData[i].totaldelay);
+				$("#cancelData").html(formatData[i].cancelled);
+				$("#flightDateData").html(formatData[i].flightdate);
+				$("#dayOfWeekData").html(formatData[i].dayofweek);
+				$("#distanceData").html(formatData[i].distance);
+			}
+			
 		}
 		
 		var links = formatData;

@@ -5,6 +5,7 @@
 	<meta name="keywords" content="HTML, CSS, JavaScript, jQuery, d3.js">
 	<meta name="description" content="Travel optimizer">
 	<meta name="author" content="Sudarsan GP">
+	<link href='http://fonts.googleapis.com/css?family=Open+Sans:700' rel='stylesheet' type='text/css'>
 	<title>PE FrontEnd OnTime</title>
 	<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.0/css/bootstrap.min.css" />
 	<link rel="stylesheet" href="stylesheet/homeStyle.css" />
@@ -23,75 +24,75 @@
 				</select>
 			</div>
 		</div>
-		<div class="row">
+		<div class="row" id="hideCarrier">
 			<div class="col-xs-3">
 				Choose Airline to Fly
 			</div>
-			<div class="col-xs-3">
+			<div class="col-xs-3" >
 				<select id="airFly">
 
 				</select>
 			</div>
 		</div>
-		<div class="row">
+		<div class="row" id="hideDestAir">
 			<div class="col-xs-3">
 				Choose Destination Airport
 			</div>
-			<div class="col-xs-3">
+			<div class="col-xs-3" >
 				<select id="destAir">
 
 				</select>
 			</div>
 		</div>
-		<div class="row">
+		<div class="row hideFligtDetails">
 			<div class="col-xs-1">
 				Departure
 			</div>
-			<div class="col-xs-1" id="departureData">
+			<div class="col-xs-1 data-display" id="departureData" >
 
 			</div>
 			<div class="col-xs-1">
 				Arrival
 			</div>
-			<div class="col-xs-1" id="arrivalData">
+			<div class="col-xs-1 data-display" id="arrivalData">
 
 			</div>
 			<div class="col-xs-1">
 				Carrier
 			</div>
-			<div class="col-xs-1" id="carrierData">
+			<div class="col-xs-1 data-display" id="carrierData">
 
 			</div>
 			<div class="col-xs-2">
 				Total Delay
 			</div>
-			<div class="col-xs-1" id="totalDelayData">
+			<div class="col-xs-1 data-display" id="totalDelayData">
 
 			</div>
 			<div class="col-xs-2">
 				Cancelled (0-No)
 			</div>
-			<div class="col-xs-1" id="cancelData">
+			<div class="col-xs-1 data-display" id="cancelData">
 
 			</div>
 		</div>
-		<div class="row">
+		<div class="row hideFligtDetails">
 			<div class="col-xs-2">
 				Flight Date
 			</div>
-			<div class="col-xs-2" id="flightDateData">
+			<div class="col-xs-2 data-display" id="flightDateData">
 
 			</div>
 			<div class="col-xs-3">
 				Day of Week (1-Mon) (7-Sun) (9-unknown)
 			</div>
-			<div class="col-xs-1" id="dayOfWeekData">
+			<div class="col-xs-1 data-display" id="dayOfWeekData">
 
 			</div>
 			<div class="col-xs-2">
 				Distance
 			</div>
-			<div class="col-xs-2" id="distanceData">
+			<div class="col-xs-2 data-display" id="distanceData">
 
 			</div>
 		</div>
