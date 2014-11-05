@@ -74,75 +74,44 @@ $(document).ready(function() {
 	// 	});
 
 	var formatData = [];
-
+	var dataJson;
 	function iterateTestData(deptCode, arrCode, carrierCode) {
 		$.get('/data/ontime_data_test.json', function(data) {
 	//	console.log(data.length);
 	//	console.log(typeof data);
 		
-			var dataJson = JSON.parse(data);
+			dataJson = JSON.parse(data);
 			// console.log(dataJson[0].origin);
 			// console.log(dataJson[0].dest);
 			//console.log(deptCode);
-			var deptCarrierCodes = [];
-			var destAirportCodes = [];
-			for(var i=0; i<dataJson.length; i++) {
-				if(dataJson[i].origin === deptCode) {
-					deptCarrierCodes.push(dataJson[i].unique_carrier);
-					destAirportCodes.push(dataJson[i].dest);
-				}
-			}
+			var allCarrierDestinationCodes = getCarrierDestinationCodesForDeparture(dataJson, deptCode)
+			var deptCarrierCodes = allCarrierDestinationCodes.carrierCodes;
+			var destAirportCodes = allCarrierDestinationCodes.destAirCodes;
+			
 			// console.log(deptCarrierCodes);
 			// console.log(destAirportCodes);
-			var selectElementCarrier = $("#airFly");
-			var fromCsv = carrierCsv;
-			for(var i=0; i<fromCsv.length;i++) {
-				var codeValue = fromCsv[i].Code;
-				var descriptionValue = fromCsv[i].Description;
-				for(var j=0; j<deptCarrierCodes.length;j++){
-					if(deptCarrierCodes[j] === codeValue) {
-						selectElementCarrier.append(new Option(descriptionValue, codeValue));
-						break;
-					}
-				}
-				
-			};
-			selectElementCarrier.html($("#airFly option").sort(function(a, b) {
-				return a.text == b.text ? 0 : a.text < b.text ? -1 : 1
-			}));
+			
 
-			var selectElementDestination = $("#destAir");
-			var fromCsvDest = airportCsv;
-			for(var i=0; i<fromCsvDest.length;i++) {
-				var codeValue = fromCsvDest[i].Code;
-				var descriptionValue = fromCsvDest[i].Description;
-				for(var j=0; j<destAirportCodes.length;j++){
-					if(destAirportCodes[j] === codeValue) {
-						selectElementDestination.append(new Option(descriptionValue, codeValue));
-						break;
-					}
-				}
-			};
-			selectElementDestination.html($("#destAir option").sort(function(a, b) {
-				return a.text == b.text ? 0 : a.text < b.text ? -1 : 1
-			}));
-
-			var min =  Number.MAX_SAFE_INTEGER;
-
-			for(var i=0; i<dataJson.length; i++) {
-				if(dataJson[i].origin === deptCode && dataJson[i].dest === arrCode && dataJson[i].unique_carrier === carrierCode) {
-					var totaldelay = (dataJson[i].dep_delay) + (dataJson[i].arr_delay);
-					if(min > totaldelay){
-						min = totaldelay;
-					}
-				}
-			}
-
-			var eachObject = {}
+			populateCarriers(deptCarrierCodes);
+			populateDestinationAirport(destAirportCodes);
+			var minDelay = getMinimumTotalDelay(dataJson, deptCode, arrCode, carrierCode);
+			generateDataForGraph(dataJson, deptCode, arrCode, carrierCode, minDelay);
+			
+		})
+		.done(function() {
+			renderGraph();
+		});
+	};
+	
+	// for testing purposes remove them finally
+	//iterateTestData("JFK", "LAX", "AA");
+	
+	function generateDataForGraph(dataJson, deptCode, arrCode, carrierCode, minDelay) {
+		var eachObject = {}
 			for(var i=0; i<dataJson.length; i++) {
 				if(dataJson[i].origin === deptCode && dataJson[i].dest === arrCode && dataJson[i].unique_carrier === carrierCode) {
 				//	console.log("match exists");
-					if(min === (dataJson[i].dep_delay) + (dataJson[i].arr_delay)) {
+					if(minDelay === (dataJson[i].dep_delay) + (dataJson[i].arr_delay)) {
 						eachObject["source"] = dataJson[i].origin;
 						eachObject["target"] = dataJson[i].dest;
 						eachObject["carrier"] = dataJson[i].unique_carrier;
@@ -164,16 +133,76 @@ $(document).ready(function() {
 				// 	eachObject = {};
 				// }
 			}
-		})
-		.done(function() {
-			renderGraph();
-		});
+	};
+
+	function getCarrierDestinationCodesForDeparture(dataJson, deptCode) {
+		var deptCarrierCodes = [];
+		var destAirportCodes = [];
+		for(var i=0; i<dataJson.length; i++) {
+				if(dataJson[i].origin === deptCode) {
+					deptCarrierCodes.push(dataJson[i].unique_carrier);
+					destAirportCodes.push(dataJson[i].dest);
+				}
+			}
+		return {
+			carrierCodes: deptCarrierCodes,
+			destAirCodes: destAirportCodes
+		};
+	};
+
+	function getMinimumTotalDelay(dataJson, deptCode, arrCode, carrierCode) {
+		var min =  Number.MAX_SAFE_INTEGER;
+
+			for(var i=0; i<dataJson.length; i++) {
+				if(dataJson[i].origin === deptCode && dataJson[i].dest === arrCode && dataJson[i].unique_carrier === carrierCode) {
+					var totaldelay = (dataJson[i].dep_delay) + (dataJson[i].arr_delay);
+					if(min > totaldelay){
+						min = totaldelay;
+					}
+				}
+			}
+		return min;
 	};
 	
-	// for testing purposes remove them finally
-	//iterateTestData("JFK", "LAX", "AA");
-	
-	
+	function populateDestinationAirport(destAirportCodes) {
+		var selectElementDestination = $("#destAir");
+		selectElementDestination.find("option").remove();
+			var fromCsvDest = airportCsv;
+			for(var i=0; i<fromCsvDest.length;i++) {
+				var codeValue = fromCsvDest[i].Code;
+				var descriptionValue = fromCsvDest[i].Description;
+				for(var j=0; j<destAirportCodes.length;j++){
+					if(destAirportCodes[j] === codeValue) {
+						selectElementDestination.append(new Option(descriptionValue, codeValue));
+						break;
+					}
+				}
+			};
+			selectElementDestination.html($("#destAir option").sort(function(a, b) {
+				return a.text == b.text ? 0 : a.text < b.text ? -1 : 1
+			}));
+	};
+
+	function populateCarriers(deptCarrierCodes) {
+		var selectElementCarrier = $("#airFly");
+		selectElementCarrier.find("option").remove();
+			var fromCsv = carrierCsv;
+			for(var i=0; i<fromCsv.length;i++) {
+				var codeValue = fromCsv[i].Code;
+				var descriptionValue = fromCsv[i].Description;
+				for(var j=0; j<deptCarrierCodes.length;j++){
+					if(deptCarrierCodes[j] === codeValue) {
+						selectElementCarrier.append(new Option(descriptionValue, codeValue));
+						break;
+					}
+				}
+				
+			};
+			selectElementCarrier.html($("#airFly option").sort(function(a, b) {
+				return a.text == b.text ? 0 : a.text < b.text ? -1 : 1
+			}));
+	};
+
 	$("#depAir").change(function() {
 		var selectedOption = "";
 		var departureCode = "";
@@ -205,61 +234,67 @@ $(document).ready(function() {
 
 	});
 
-	// $("#destAir").change(function() {
-	// 	var selectedOption = "";
-	// 	var arrivalCode = "";
+	$("#destAir").change(function() {
+		var selectedOption = "";
+		var arrivalCode = "";
 		
-	// 	selectedOption = $(this).val();
+		selectedOption = $(this).val();
 
-	// 		var fromCsv = airportCsv;
-	// 		//console.log(fromCsv.length);
-	// 		for(var i=0; i<fromCsv.length;i++) {
-	// 			var codeValue = fromCsv[i].Code;
-	// 			var descriptionValue = fromCsv[i].Description;
+			var fromCsv = airportCsv;
+			//console.log(fromCsv.length);
+			for(var i=0; i<fromCsv.length;i++) {
+				var codeValue = fromCsv[i].Code;
+				var descriptionValue = fromCsv[i].Description;
 				
-	// 			if(selectedOption === codeValue) {
-	// 				//console.log(descriptionValue);
+				if(selectedOption === codeValue) {
+					//console.log(descriptionValue);
 					
-	// 				arrivalCode = codeValue;
-	// 				// console.log(codeValue);
-	// 				break;
-	// 			}
-	// 		};
-	// 		var departureCode = $("#depAir").val();
-	// 		var carrierCode = $("#airFly").val();
-	// 		iterateTestData(departureCode, arrivalCode, carrierCode);
-	//    // console.log(selectedOption);
-	//    // console.log(selectedOption.length);
+					arrivalCode = codeValue;
+					// console.log(codeValue);
+					break;
+				}
+			};
+			var departureCode = $("#depAir").val();
+			var carrierCode = $("#airFly").val();
+
+			//iterateTestData(departureCode, arrivalCode, carrierCode);
+			var minDelay = getMinimumTotalDelay(dataJson, departureCode, arrivalCode, carrierCode);
+			generateDataForGraph(dataJson, departureCode, arrivalCode, carrierCode, minDelay);
+			renderGraph();
+	   // console.log(selectedOption);
+	   // console.log(selectedOption.length);
 
 
-	// });
+	});
 
 
-	// $("#airFly").change(function() {
-	// 	var selectedOption = "";
-	// 	var carrierCode = "";
-	// 	selectedOption = $(this).val();
+	$("#airFly").change(function() {
+		var selectedOption = "";
+		var carrierCode = "";
+		selectedOption = $(this).val();
 
-	// 	var fromCsv = carrierCsv;
-	// 		//console.log(fromCsv.length);
-	// 		for(var i=0; i<fromCsv.length;i++) {
-	// 			var codeValue = fromCsv[i].Code;
-	// 			var descriptionValue = fromCsv[i].Description;
+		var fromCsv = carrierCsv;
+			//console.log(fromCsv.length);
+			for(var i=0; i<fromCsv.length;i++) {
+				var codeValue = fromCsv[i].Code;
+				var descriptionValue = fromCsv[i].Description;
 				
-	// 			if(selectedOption === codeValue) {
-	// 				//console.log(descriptionValue);
+				if(selectedOption === codeValue) {
+					//console.log(descriptionValue);
 					
-	// 				carrierCode = codeValue;
-	// 				// console.log(codeValue);
-	// 				break;
-	// 			}
-	// 		};
-	// 		var departureCode = $("#depAir").val();
-	// 		var arrivalCode = $("#destAir").val();
-	// 		iterateTestData(departureCode, arrivalCode, carrierCode);
+					carrierCode = codeValue;
+					// console.log(codeValue);
+					break;
+				}
+			};
+			var departureCode = $("#depAir").val();
+			var arrivalCode = $("#destAir").val();
+			//iterateTestData(departureCode, arrivalCode, carrierCode);
+			var minDelay = getMinimumTotalDelay(dataJson, departureCode, arrivalCode, carrierCode);
+			generateDataForGraph(dataJson, departureCode, arrivalCode, carrierCode, minDelay);
+			renderGraph();
 
-
-	// });
+	});
 
 	function renderGraph() {
 
