@@ -58,12 +58,12 @@ $(document).ready(function() {
 
 			populateCarriers(deptCarrierCodes);
 			populateDestinationAirport(destAirportCodes);
-			var minDelay = getMinimumTotalDelay(dataJson, deptCode, arrCode, carrierCode);
-			generateDataForGraph(dataJson, deptCode, arrCode, carrierCode, minDelay);
+			//var minDelay = getMinimumTotalDelay(dataJson, deptCode, arrCode, carrierCode);
+			//generateDataForGraph(dataJson, deptCode, arrCode, carrierCode, minDelay);
 			
 		})
 		.done(function() {
-			renderGraph();
+			//renderGraph();
 		})
 		.fail(function() {
 			alert(' error getting json data from file');
@@ -75,10 +75,13 @@ $(document).ready(function() {
 	
 	function generateDataForGraph(dataJson, deptCode, arrCode, carrierCode, minDelay) {
 		var eachObject = {}
+		//console.log(carrierCode);
+		//console.log(minDelay);
+		for(var j=0; j<carrierCode.length; j++) {
 			for(var i=0; i<dataJson.length; i++) {
-				if(dataJson[i].origin === deptCode && dataJson[i].dest === arrCode && dataJson[i].unique_carrier === carrierCode && dataJson[i].cancelled === "0") {
+				if(dataJson[i].origin === deptCode && dataJson[i].dest === arrCode && dataJson[i].unique_carrier === carrierCode[j] && dataJson[i].cancelled === "0") {
 
-					if(minDelay === parseInt(dataJson[i].dep_delay, 10) + parseInt(dataJson[i].arr_delay, 10)) {
+					if(minDelay[j] === parseInt(dataJson[i].dep_delay, 10) + parseInt(dataJson[i].arr_delay, 10)) {
 						eachObject["source"] = dataJson[i].origin;
 						eachObject["target"] = dataJson[i].dest;
 						eachObject["carrier"] = dataJson[i].unique_carrier;
@@ -94,6 +97,7 @@ $(document).ready(function() {
 				}
 				
 			}
+		}
 	};
 
 	function getCarrierDestinationCodesForDeparture(dataJson, deptCode) {
@@ -113,16 +117,21 @@ $(document).ready(function() {
 
 	function getMinimumTotalDelay(dataJson, deptCode, arrCode, carrierCode) {
 		var min =  Number.MAX_SAFE_INTEGER;
+		var minArray = [];
 
+		for(var j=0; j<carrierCode.length; j++) {
 			for(var i=0; i<dataJson.length; i++) {
-				if(dataJson[i].origin === deptCode && dataJson[i].dest === arrCode && dataJson[i].unique_carrier === carrierCode && dataJson[i].cancelled === "0") {
+				if(dataJson[i].origin === deptCode && dataJson[i].dest === arrCode && dataJson[i].unique_carrier === carrierCode[j] && dataJson[i].cancelled === "0") {
 					var totaldelay = parseInt(dataJson[i].dep_delay, 10) + parseInt(dataJson[i].arr_delay, 10);
 					if(min > totaldelay){
 						min = totaldelay;
 					}
 				}
 			}
-		return min;
+			minArray.push(min);
+			min =  Number.MAX_SAFE_INTEGER;
+		}
+		return minArray;
 	};
 	
 	function populateDestinationAirport(destAirportCodes) {
@@ -206,38 +215,46 @@ $(document).ready(function() {
 		};
 		var departureCode = $("#depAir").val();
 		var carrierCode = $("#airFly").val();
-
-		var minDelay = getMinimumTotalDelay(dataJson, departureCode, arrivalCode, carrierCode);
-		generateDataForGraph(dataJson, departureCode, arrivalCode, carrierCode, minDelay);
-		renderGraph();
+		if(carrierCode !== null) {
+			var minDelay = getMinimumTotalDelay(dataJson, departureCode, arrivalCode, carrierCode);
+			generateDataForGraph(dataJson, departureCode, arrivalCode, carrierCode, minDelay);
+			renderGraph();	
+		}
+		
 	});
 
 
 	$("#airFly").change(function() {
-		var selectedOption = "";
-		var carrierCode = "";
-		selectedOption = $(this).val();
+		var selectedOptions;
+		var carrierCode = [];
+		selectedOptions = $(this).val();
+		//console.log(selectedOptions);
+		if(selectedOptions !== null) {
 
-		var fromCsv = carrierCsv;
-		for(var i=0; i<fromCsv.length;i++) {
-			var codeValue = fromCsv[i].Code;
-			var descriptionValue = fromCsv[i].Description;
-			
-			if(selectedOption === codeValue) {
-				carrierCode = codeValue;
-				break;
-			}
-		};
-		var departureCode = $("#depAir").val();
-		var arrivalCode = $("#destAir").val();
+			var fromCsv = carrierCsv;
+			for(var i=0; i<fromCsv.length;i++) {
+				var codeValue = fromCsv[i].Code;
+				var descriptionValue = fromCsv[i].Description;
+				for(var j=0; j<selectedOptions.length; j++) {
+					if(selectedOptions[j] === codeValue) {
+						carrierCode.push(codeValue);
+					}
+				}			
+				
+			};
+			//console.log(carrierCode);
+			var departureCode = $("#depAir").val();
+			var arrivalCode = $("#destAir").val();
 
-		var minDelay = getMinimumTotalDelay(dataJson, departureCode, arrivalCode, carrierCode);
-		generateDataForGraph(dataJson, departureCode, arrivalCode, carrierCode, minDelay);
-		renderGraph();
+			var minDelay = getMinimumTotalDelay(dataJson, departureCode, arrivalCode, carrierCode);
+			generateDataForGraph(dataJson, departureCode, arrivalCode, carrierCode, minDelay);
+			renderGraph();
+		}
 	});
 
 	function renderGraph() {
 		$("svg").remove();
+		//console.log(formatData.length);
 		if(formatData.length > 0) {
 			$(".hideFligtDetails").show();
 			for(var i=0; i<formatData.length; i++) {
@@ -251,6 +268,9 @@ $(document).ready(function() {
 				$("#distanceData").html(formatData[i].distance);
 			}
 			
+		}
+		else {
+			$(".hideFligtDetails").hide();
 		}
 		
 		var links = formatData;
@@ -289,7 +309,7 @@ $(document).ready(function() {
 		});
 
 		var w = 1000,
-		    h = 600;
+		    h = 200;
 
 		var force = d3.layout.force()
 		    .nodes(d3.values(nodes))
