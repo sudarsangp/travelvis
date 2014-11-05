@@ -2,7 +2,7 @@ $(document).ready(function() {
 	// console.log("hello");
 	$("#hideCarrier").hide();
 	$("#hideDestAir").hide();
-	$(".hideFligtDetails").hide();
+	$(".hideFlightDetails").hide();
 
 	var airportCsv = [];
 	var carrierCsv = [];
@@ -77,25 +77,28 @@ $(document).ready(function() {
 		var eachObject = {}
 		//console.log(carrierCode);
 		//console.log(minDelay);
-		for(var j=0; j<carrierCode.length; j++) {
-			for(var i=0; i<dataJson.length; i++) {
-				if(dataJson[i].origin === deptCode && dataJson[i].dest === arrCode && dataJson[i].unique_carrier === carrierCode[j] && dataJson[i].cancelled === "0") {
+		//console.log(arrCode);
+		for(var k=0; k<arrCode.length; k++) {
+			for(var j=0; j<carrierCode.length; j++) {
+				for(var i=0; i<dataJson.length; i++) {
+					if(dataJson[i].origin === deptCode && dataJson[i].dest === arrCode[k] && dataJson[i].unique_carrier === carrierCode[j] && dataJson[i].cancelled === "0") {
 
-					if(minDelay[j] === parseInt(dataJson[i].dep_delay, 10) + parseInt(dataJson[i].arr_delay, 10)) {
-						eachObject["source"] = dataJson[i].origin;
-						eachObject["target"] = dataJson[i].dest;
-						eachObject["carrier"] = dataJson[i].unique_carrier;
-						eachObject["totaldelay"] = parseInt(dataJson[i].dep_delay, 10) + parseInt(dataJson[i].arr_delay, 10);
-						eachObject["cancelled"] = dataJson[i].cancelled;
-						eachObject["flightdate"] = dataJson[i].fl_date;
-						eachObject["dayofweek"] = dataJson[i].day_of_week;
-						eachObject["distance"] = dataJson[i].distance;
+						if(minDelay[k][j] === parseInt(dataJson[i].dep_delay, 10) + parseInt(dataJson[i].arr_delay, 10)) {
+							eachObject["source"] = dataJson[i].origin;
+							eachObject["target"] = dataJson[i].dest;
+							eachObject["carrier"] = dataJson[i].unique_carrier;
+							eachObject["totaldelay"] = parseInt(dataJson[i].dep_delay, 10) + parseInt(dataJson[i].arr_delay, 10);
+							eachObject["cancelled"] = dataJson[i].cancelled;
+							eachObject["flightdate"] = dataJson[i].fl_date;
+							eachObject["dayofweek"] = dataJson[i].day_of_week;
+							eachObject["distance"] = dataJson[i].distance;
 
-						formatData.push(eachObject);
-						eachObject = {};
+							formatData.push(eachObject);
+							eachObject = {};
+						}
 					}
+					
 				}
-				
 			}
 		}
 	};
@@ -118,20 +121,25 @@ $(document).ready(function() {
 	function getMinimumTotalDelay(dataJson, deptCode, arrCode, carrierCode) {
 		var min =  Number.MAX_SAFE_INTEGER;
 		var minArray = [];
+		var arrAirMinArray = [];
 
-		for(var j=0; j<carrierCode.length; j++) {
-			for(var i=0; i<dataJson.length; i++) {
-				if(dataJson[i].origin === deptCode && dataJson[i].dest === arrCode && dataJson[i].unique_carrier === carrierCode[j] && dataJson[i].cancelled === "0") {
-					var totaldelay = parseInt(dataJson[i].dep_delay, 10) + parseInt(dataJson[i].arr_delay, 10);
-					if(min > totaldelay){
-						min = totaldelay;
+		for(var k=0; k<arrCode.length; k++) {
+			for(var j=0; j<carrierCode.length; j++) {
+				for(var i=0; i<dataJson.length; i++) {
+					if(dataJson[i].origin === deptCode && dataJson[i].dest === arrCode[k] && dataJson[i].unique_carrier === carrierCode[j] && dataJson[i].cancelled === "0") {
+						var totaldelay = parseInt(dataJson[i].dep_delay, 10) + parseInt(dataJson[i].arr_delay, 10);
+						if(min > totaldelay){
+							min = totaldelay;
+						}
 					}
 				}
+				minArray.push(min);
+				min =  Number.MAX_SAFE_INTEGER;
 			}
-			minArray.push(min);
-			min =  Number.MAX_SAFE_INTEGER;
+			arrAirMinArray.push(minArray);
+			minArray = [];
 		}
-		return minArray;
+		return arrAirMinArray;
 	};
 	
 	function populateDestinationAirport(destAirportCodes) {
@@ -198,29 +206,32 @@ $(document).ready(function() {
 	});
 
 	$("#destAir").change(function() {
-		var selectedOption = "";
-		var arrivalCode = "";
+		var selectedOptions;
+		var arrivalCode = [];
 		
-		selectedOption = $(this).val();
+		selectedOptions = $(this).val();
 
-		var fromCsv = airportCsv;
-		for(var i=0; i<fromCsv.length;i++) {
-			var codeValue = fromCsv[i].Code;
-			var descriptionValue = fromCsv[i].Description;
-			
-			if(selectedOption === codeValue) {
-				arrivalCode = codeValue;
-				break;
+		if(selectedOptions !== null) {
+
+			var fromCsv = airportCsv;
+			for(var i=0; i<fromCsv.length;i++) {
+				var codeValue = fromCsv[i].Code;
+				var descriptionValue = fromCsv[i].Description;
+				for(var j=0; j<selectedOptions.length; j++) {
+					if(selectedOptions[j] === codeValue) {
+						arrivalCode.push(codeValue);
+					}
+				}
+				
+			};
+			var departureCode = $("#depAir").val();
+			var carrierCode = $("#airFly").val();
+			if(carrierCode !== null) {
+				var minDelay = getMinimumTotalDelay(dataJson, departureCode, arrivalCode, carrierCode);
+				generateDataForGraph(dataJson, departureCode, arrivalCode, carrierCode, minDelay);
+				renderGraph();	
 			}
-		};
-		var departureCode = $("#depAir").val();
-		var carrierCode = $("#airFly").val();
-		if(carrierCode !== null) {
-			var minDelay = getMinimumTotalDelay(dataJson, departureCode, arrivalCode, carrierCode);
-			generateDataForGraph(dataJson, departureCode, arrivalCode, carrierCode, minDelay);
-			renderGraph();	
 		}
-		
 	});
 
 
@@ -245,10 +256,11 @@ $(document).ready(function() {
 			//console.log(carrierCode);
 			var departureCode = $("#depAir").val();
 			var arrivalCode = $("#destAir").val();
-
-			var minDelay = getMinimumTotalDelay(dataJson, departureCode, arrivalCode, carrierCode);
-			generateDataForGraph(dataJson, departureCode, arrivalCode, carrierCode, minDelay);
-			renderGraph();
+			if(arrivalCode !== null) {
+				var minDelay = getMinimumTotalDelay(dataJson, departureCode, arrivalCode, carrierCode);
+				generateDataForGraph(dataJson, departureCode, arrivalCode, carrierCode, minDelay);
+				renderGraph();
+			}
 		}
 	});
 
@@ -256,7 +268,7 @@ $(document).ready(function() {
 		$("svg").remove();
 		//console.log(formatData.length);
 		if(formatData.length > 0) {
-			$(".hideFligtDetails").show();
+			$(".hideFlightDetails").show();
 			for(var i=0; i<formatData.length; i++) {
 				$("#departureData").html(formatData[i].source);
 				$("#arrivalData").html(formatData[i].target);
@@ -270,7 +282,7 @@ $(document).ready(function() {
 			
 		}
 		else {
-			$(".hideFligtDetails").hide();
+			$(".hideFlightDetails").hide();
 		}
 		
 		var links = formatData;
@@ -309,7 +321,7 @@ $(document).ready(function() {
 		});
 
 		var w = 1000,
-		    h = 200;
+		    h = 600;
 
 		var force = d3.layout.force()
 		    .nodes(d3.values(nodes))
