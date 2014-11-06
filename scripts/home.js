@@ -264,6 +264,27 @@ $(document).ready(function() {
 		}
 	});
 
+	function calculateDay(dayofweek) {
+		var integerDay = parseInt(dayofweek, 10);
+		var days = [
+			{code: 1, day: "Monday"},
+			{code: 2, day: "Tuesday"},
+			{code: 3, day: "Wednesday"},
+			{code: 4, day: "Thursday"},
+			{code: 5, day: "Friday"},
+			{code: 6, day: "Saturday"},
+			{code: 7, day: "Sunday"},
+			{code: 9, day: "Unknown"}
+		];
+		var result = "";
+		for(var i=0; i<days.length; i++){
+			if(days[i].code === integerDay) {
+				result = days[i].day;
+			}
+		}
+		return result;
+	}
+
 	function renderGraph() {
 		$("svg").remove();
 		//console.log(formatData.length);
@@ -276,7 +297,7 @@ $(document).ready(function() {
 				$("#totalDelayData").html(formatData[i].totaldelay);
 				$("#cancelData").html(formatData[i].cancelled);
 				$("#flightDateData").html(formatData[i].flightdate);
-				$("#dayOfWeekData").html(formatData[i].dayofweek);
+				$("#dayOfWeekData").html(calculateDay(formatData[i].dayofweek));
 				$("#distanceData").html(formatData[i].distance);
 			}
 			
@@ -332,6 +353,8 @@ $(document).ready(function() {
 		    .on("tick", tick)
 		    .start();
 
+		//console.log(force.nodes());
+
 		var svg = d3.select("#forceGraph").append("svg:svg")
 		    .attr("width", w)
 		    .attr("height", h);
@@ -355,7 +378,8 @@ $(document).ready(function() {
 		  .enter().append("svg:path")
 		    .attr("class", function(d) { return "link " + d.linknum; })
 		    .attr("id",function(d,i) { return "linkId_" + i; })
-		    .attr("marker-end", function(d) { return "url(#" + d.linknum + ")"; });
+		    .attr("marker-end", function(d) { return "url(#" + d.linknum + ")"; })
+		     .style("stroke", function(d){ return color(d.linknum);});
 
 		     var linktext = svg.append("svg:g").selectAll("g.linklabelholder").data(force.links());
 	
@@ -371,14 +395,24 @@ $(document).ready(function() {
 		    .attr("xlink:href",function(d,i) { return "#linkId_" + i;})
 		     .text(function(d) { 
 		    	 return d.carrier; 
-		    	 });
-	 
+		    	 })
+		     .style("stroke", function(d){ return color(d.linknum);});
+	 	
+	 	var tooltip = d3.select("body")
+		    .append("div")
+		    .style("position", "absolute")
+		    .style("z-index", "10")
+		    .style("visibility", "hidden");
+		    
 
 		var circle = svg.append("svg:g").selectAll("circle")
 		    .data(force.nodes())
 		  .enter().append("svg:circle")
 		    .attr("r", 5)
-		    .style("fill", function(d){ return color(d.linknum);})
+		    .style("fill", function(d){  if(d.index === 0) return "red"; else return "blue";})
+		    .on("mouseover", function(d){  return tooltip.text(d.weight).style("visibility", "visible");})
+		    .on("mousemove", function(){return tooltip.style("top", (event.pageY+10)+"px").style("left",(event.pageX-10)+"px");})
+		    .on("mouseout", function(d){ return tooltip.style("visibility", "hidden");})
 		    .call(force.drag);
 
 		var text = svg.append("svg:g").selectAll("g")

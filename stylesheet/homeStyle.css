@@ -6,6 +6,10 @@ body {
 	color: blue;
 }
 
+.row-gap {
+	margin-bottom: 5px;
+}
+
 path.link {
   fill: none;
   stroke: #666;
@@ -23,3 +27,4 @@ text {
   font: 10px sans-serif;
   pointer-events: none;
 }
+
